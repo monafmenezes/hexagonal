@@ -1,6 +1,6 @@
 package com.cliente.hexagonal.application.core.domain;
 
-public class Costumer {
+public class Customer {
     private String id;
 
     private String name;
@@ -11,11 +11,11 @@ public class Costumer {
 
     private Boolean isValidCpf;
 
-    public Costumer() {
+    public Customer() {
         this.isValidCpf = false;
     }
 
-    public Costumer(String id, String name, String cpf, Address address, Boolean isValidCpf) {
+    public Customer(String id, String name, String cpf, Address address, Boolean isValidCpf) {
         this.id = id;
         this.name = name;
         this.cpf = cpf;
@@ -59,7 +59,7 @@ public class Costumer {
         return isValidCpf;
     }
 
-    public void setValidCpf(Boolean validCpf) {
-        isValidCpf = validCpf;
+    public void setValidCpf(Boolean isValidCpf) {
+        this.isValidCpf = isValidCpf;
     }
 }
