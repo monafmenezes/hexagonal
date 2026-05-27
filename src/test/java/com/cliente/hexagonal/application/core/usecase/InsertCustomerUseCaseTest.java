@@ -1,0 +1,37 @@
+package com.cliente.hexagonal.application.core.usecase;
+
+import com.cliente.hexagonal.application.core.domain.Address;
+import com.cliente.hexagonal.application.core.domain.Customer;
+import com.cliente.hexagonal.application.ports.out.FindAddresByZipCodeOutputPort;
+import com.cliente.hexagonal.application.ports.out.InsertCustomerOutputPort;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class InsertCustomerUseCaseTest {
+
+    @Test
+    void shouldFindAddressAndPersistCustomer() {
+        FindAddresByZipCodeOutputPort findAddressByZipCodeOutputPort = mock(FindAddresByZipCodeOutputPort.class);
+        InsertCustomerOutputPort insertCustomerOutputPort = mock(InsertCustomerOutputPort.class);
+        InsertCustomerUseCase useCase = new InsertCustomerUseCase(
+                findAddressByZipCodeOutputPort,
+                insertCustomerOutputPort);
+        Customer customer = new Customer();
+        Address address = new Address("Rua A", "Fortaleza", "CE");
+
+        when(findAddressByZipCodeOutputPort.find("60100-000")).thenReturn(address);
+
+        useCase.insert(customer, "60100-000");
+
+        ArgumentCaptor<Customer> customerCaptor = ArgumentCaptor.forClass(Customer.class);
+        verify(findAddressByZipCodeOutputPort).find("60100-000");
+        verify(insertCustomerOutputPort).insert(customerCaptor.capture());
+        assertSame(customer, customerCaptor.getValue());
+        assertSame(address, customer.getAddress());
+    }
+}
