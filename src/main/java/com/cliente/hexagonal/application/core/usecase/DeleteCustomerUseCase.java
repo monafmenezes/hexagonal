@@ -1,9 +1,10 @@
 package com.cliente.hexagonal.application.core.usecase;
 
+import com.cliente.hexagonal.application.ports.in.DeleteCustomerByIdInputPort;
 import com.cliente.hexagonal.application.ports.in.FindCustomerByIdInputPort;
 import com.cliente.hexagonal.application.ports.out.DeleteCustomerOutputPort;
 
-public class DeleteCustomerUseCase implements DeleteCustomerOutputPort {
+public class DeleteCustomerUseCase implements DeleteCustomerByIdInputPort {
 
     private final FindCustomerByIdInputPort findCustomerByIdInputPort;
 

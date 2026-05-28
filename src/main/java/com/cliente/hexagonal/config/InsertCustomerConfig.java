@@ -1,5 +1,7 @@
 package com.cliente.hexagonal.config;
 
+import com.cliente.hexagonal.adapters.out.FindAddressByZipCodeAdapter;
+import com.cliente.hexagonal.adapters.out.InsertCustomerAdapter;
 import com.cliente.hexagonal.application.core.usecase.InsertCustomerUseCase;
 import com.cliente.hexagonal.application.ports.in.InsertCustomerInputPort;
 import com.cliente.hexagonal.application.ports.out.FindAddresByZipCodeOutputPort;
@@ -12,8 +14,8 @@ public class InsertCustomerConfig {
 
     @Bean
     public InsertCustomerInputPort insertCustomerInputPort(
-            FindAddresByZipCodeOutputPort findAddresByZipCodeOutputPort,
-            InsertCustomerOutputPort insertCustomerOutputPort) {
-        return new InsertCustomerUseCase(findAddresByZipCodeOutputPort, insertCustomerOutputPort);
+            FindAddressByZipCodeAdapter findAddressByZipCodeAdapter,
+            InsertCustomerAdapter insertCustomerAdapter) {
+        return new InsertCustomerUseCase(findAddressByZipCodeAdapter, insertCustomerAdapter);
     }
 }
