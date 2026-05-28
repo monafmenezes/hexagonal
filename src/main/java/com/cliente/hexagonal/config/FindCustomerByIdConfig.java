@@ -1,5 +1,6 @@
 package com.cliente.hexagonal.config;
 
+import com.cliente.hexagonal.adapters.out.FindCustomerByIdAdapter;
 import com.cliente.hexagonal.application.core.usecase.FindCustomerByIdUseCase;
 import com.cliente.hexagonal.application.ports.in.FindCustomerByIdInputPort;
 import com.cliente.hexagonal.application.ports.out.FindCustomerByIdOutputPort;
@@ -11,7 +12,7 @@ public class FindCustomerByIdConfig {
 
     @Bean
     public FindCustomerByIdInputPort findCustomerByIdInputPort(
-            FindCustomerByIdOutputPort findCustomerByIdOutputPort) {
-        return new FindCustomerByIdUseCase(findCustomerByIdOutputPort);
+            FindCustomerByIdAdapter findCustomerByIdAdapter) {
+        return new FindCustomerByIdUseCase(findCustomerByIdAdapter);
     }
 }
