@@ -25,7 +25,7 @@ adapters/out       -> persistência, Feign clients e mappers externos
 config             -> wiring dos casos de uso com Spring
 ```
 
-Fluxo principal de cadastro de cliente:
+Fluxo de cadastro de cliente:
 
 ```text
 HTTP Controller
@@ -33,6 +33,16 @@ HTTP Controller
   -> InsertCustomerUseCase
   -> FindAddresByZipCodeOutputPort
   -> InsertCustomerOutputPort
+  -> MongoDB Adapter
+```
+
+Fluxo de consulta de cliente por ID:
+
+```text
+HTTP Controller
+  -> FindCustomerByIdInputPort
+  -> FindCustomerByIdUseCase
+  -> FindCustomerByIdOutputPort
   -> MongoDB Adapter
 ```
 
@@ -58,10 +68,10 @@ mvn test
 
 A suíte atual contém testes unitários para:
 
-- Caso de uso de cadastro de cliente.
-- Controller de cadastro.
+- Casos de uso de cadastro e consulta de cliente por ID.
+- Controller de cadastro e consulta.
 - Mappers MapStruct.
-- Adapters de persistência e busca de endereço.
+- Adapters de persistência, consulta por ID e busca de endereço.
 
 ## Como Rodar a Aplicação
 
@@ -76,7 +86,9 @@ Com as dependências disponíveis:
 mvn spring-boot:run
 ```
 
-Endpoint principal:
+Endpoints principais:
+
+Criar cliente:
 
 ```http
 POST /api/v1/customers
@@ -86,6 +98,27 @@ Content-Type: application/json
   "name": "Maria",
   "cpf": "12345678901",
   "zipCode": "60100-000"
+}
+```
+
+Consultar cliente por ID:
+
+```http
+GET /api/v1/customers/{id}
+```
+
+Resposta esperada:
+
+```json
+{
+  "name": "Maria",
+  "address": {
+    "street": "Rua A",
+    "city": "Fortaleza",
+    "state": "CE"
+  },
+  "cpf": "12345678901",
+  "isValidCpf": true
 }
 ```
 
@@ -106,4 +139,4 @@ mvn --batch-mode test
 
 ## Observações
 
-Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são validação de CPF/CEP, tratamento de erro em integrações externas, testes de integração com MongoDB, configuração correta de ambientes e proteção de dados pessoais como CPF.
+Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são validação de CPF/CEP, tratamento de erro em integrações externas, resposta HTTP adequada para cliente não encontrado, testes de integração com MongoDB, configuração correta de ambientes e proteção de dados pessoais como CPF.
