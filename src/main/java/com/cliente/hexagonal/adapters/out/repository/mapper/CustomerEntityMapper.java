@@ -9,4 +9,7 @@ import org.mapstruct.Mapping;
 public interface CustomerEntityMapper {
     @Mapping(target = "isValidCpf", source = "validCpf")
     CustomerEntity toCustomerEntity(Customer customer);
+
+    @Mapping(target = "validCpf", source = "isValidCpf")
+    Customer toCustomer(CustomerEntity customerEntity);
 }
