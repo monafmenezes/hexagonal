@@ -12,6 +12,7 @@ O objetivo principal não é entregar uma API completa de produção, mas exerci
 - Implementar adapters para controller REST, MongoDB e cliente HTTP com Feign.
 - Integrar Apache Kafka como adapter de saída para envio de CPF para validação e como adapter de entrada para receber o resultado da validação.
 - Testar unidades isoladas sem depender do contexto completo do Spring.
+- Validar as regras da arquitetura hexagonal com testes automatizados usando ArchUnit.
 - Usar CI para validar a suíte de testes a cada push ou pull request.
 
 ## Arquitetura
@@ -72,6 +73,7 @@ HTTP Controller
 - Lombok
 - JUnit 5
 - Mockito
+- ArchUnit
 - Maven
 - GitHub Actions
 
@@ -87,6 +89,12 @@ A suíte atual contém testes unitários para:
 - Controller de cadastro e consulta.
 - Mappers MapStruct.
 - Adapters de persistência, consulta por ID e busca de endereço.
+
+E testes de arquitetura com ArchUnit para:
+
+- Garantir que a camada `Application` não acessa `Adapters` nem `Config`.
+- Garantir que a camada `Adapters` não é acessada diretamente por outras camadas além de `Config`.
+- Garantir que a camada `Config` não é acessada por nenhuma outra camada.
 
 ## Como Rodar a Aplicação
 
@@ -181,4 +189,4 @@ mvn --batch-mode test
 
 ## Observações
 
-Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são tratamento de erro em integrações externas, resposta HTTP adequada para cliente não encontrado, testes de integração com MongoDB e Kafka, configuração correta de ambientes e proteção de dados pessoais como CPF.
+Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são tratamento de erro em integrações externas, resposta HTTP adequada para cliente não encontrado, testes de integração com MongoDB e Kafka, configuração correta de ambientes e proteção de dados pessoais como CPF, e expansão dos testes de arquitetura com regras mais granulares por subcamada.
