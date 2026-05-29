@@ -10,6 +10,7 @@ O objetivo principal não é entregar uma API completa de produção, mas exerci
 - Modelar portas de entrada para casos de uso chamados por adapters HTTP.
 - Modelar portas de saída para persistência e integrações externas.
 - Implementar adapters para controller REST, MongoDB e cliente HTTP com Feign.
+- Integrar Apache Kafka como adapter de saída para envio de CPF para validação e como adapter de entrada para receber o resultado da validação.
 - Testar unidades isoladas sem depender do contexto completo do Spring.
 - Usar CI para validar a suíte de testes a cada push ou pull request.
 
@@ -18,10 +19,10 @@ O objetivo principal não é entregar uma API completa de produção, mas exerci
 O projeto segue a ideia central da arquitetura hexagonal: o core da aplicação não deve conhecer detalhes de entrada e saída.
 
 ```text
-adapters/in        -> entrada da aplicação, como controllers REST
+adapters/in        -> entrada da aplicação: controllers REST e consumers Kafka
 application/core   -> domínio e casos de uso
 application/ports  -> contratos de entrada e saída
-adapters/out       -> persistência, Feign clients e mappers externos
+adapters/out       -> persistência, Feign clients, Kafka producer e mappers externos
 config             -> wiring dos casos de uso com Spring
 ```
 
@@ -31,8 +32,21 @@ Fluxo de cadastro de cliente:
 HTTP Controller
   -> InsertCustomerInputPort
   -> InsertCustomerUseCase
-  -> FindAddresByZipCodeOutputPort
+  -> FindAddresByZipCodeOutputPort (Feign)
   -> InsertCustomerOutputPort
+  -> MongoDB Adapter
+  -> SendCpfForValidationOutputPort
+  -> SendCpfForValidationAdapter (Kafka Producer → tp-cpf-validation)
+```
+
+Fluxo de validação de CPF via Kafka:
+
+```text
+ReceiveValidatedCpfConsumer (Kafka Consumer ← tp-cpf-validated)
+  -> UpdateCustomerInputPort
+  -> UpdateCustomerUseCase
+  -> FindAddresByZipCodeOutputPort (Feign)
+  -> UpdateCustomerOutputPort
   -> MongoDB Adapter
 ```
 
@@ -53,6 +67,7 @@ HTTP Controller
 - Spring Web MVC
 - Spring Data MongoDB
 - Spring Cloud OpenFeign
+- Apache Kafka (Spring Kafka)
 - MapStruct
 - Lombok
 - JUnit 5
@@ -68,7 +83,7 @@ mvn test
 
 A suíte atual contém testes unitários para:
 
-- Casos de uso de cadastro e consulta de cliente por ID.
+- Casos de uso de cadastro, consulta por ID, atualização e remoção de cliente.
 - Controller de cadastro e consulta.
 - Mappers MapStruct.
 - Adapters de persistência, consulta por ID e busca de endereço.
@@ -79,6 +94,7 @@ Para executar a aplicação completa, é necessário ter:
 
 - MongoDB disponível em `mongodb://localhost:27017/hexagonal`.
 - Um serviço de endereços respondendo em `http://localhost:8082/addresses/{zipCode}`.
+- Apache Kafka disponível em `localhost:9092`.
 
 Com as dependências disponíveis:
 
@@ -86,7 +102,14 @@ Com as dependências disponíveis:
 mvn spring-boot:run
 ```
 
-Endpoints principais:
+### Tópicos Kafka
+
+| Tópico             | Direção | Descrição                                          |
+|--------------------|---------|----------------------------------------------------|
+| `tp-cpf-validation` | Saída   | CPF enviado para validação após cadastro do cliente |
+| `tp-cpf-validated`  | Entrada | Resultado da validação recebido para atualizar o cliente |
+
+### Endpoints
 
 Criar cliente:
 
@@ -122,6 +145,25 @@ Resposta esperada:
 }
 ```
 
+Atualizar cliente:
+
+```http
+PUT /api/v1/customers/{id}
+Content-Type: application/json
+
+{
+  "name": "Maria Silva",
+  "cpf": "12345678901",
+  "zipCode": "60100-000"
+}
+```
+
+Remover cliente:
+
+```http
+DELETE /api/v1/customers/{id}
+```
+
 ## CI
 
 O projeto possui workflow em `.github/workflows/ci.yml`.
@@ -139,4 +181,4 @@ mvn --batch-mode test
 
 ## Observações
 
-Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são validação de CPF/CEP, tratamento de erro em integrações externas, resposta HTTP adequada para cliente não encontrado, testes de integração com MongoDB, configuração correta de ambientes e proteção de dados pessoais como CPF.
+Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são tratamento de erro em integrações externas, resposta HTTP adequada para cliente não encontrado, testes de integração com MongoDB e Kafka, configuração correta de ambientes e proteção de dados pessoais como CPF.
