@@ -1,6 +1,7 @@
 package com.cliente.hexagonal.application.core.usecase;
 
 import com.cliente.hexagonal.application.core.domain.Customer;
+import com.cliente.hexagonal.application.core.exception.CustomerNotFoundException;
 import com.cliente.hexagonal.application.ports.out.FindCustomerByIdOutputPort;
 import org.junit.jupiter.api.Test;
 
@@ -36,9 +37,9 @@ class FindCustomerByIdUseCaseTest {
 
         when(findCustomerByIdOutputPort.find("id-1")).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> useCase.find("id-1"));
+        CustomerNotFoundException exception = assertThrows(CustomerNotFoundException.class, () -> useCase.find("id-1"));
 
         verify(findCustomerByIdOutputPort).find("id-1");
-        assertEquals("Customer not found", exception.getMessage());
+        assertEquals("Cliente não encontrado com o id: id-1", exception.getMessage());
     }
 }
