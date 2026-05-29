@@ -13,6 +13,8 @@ O objetivo principal não é entregar uma API completa de produção, mas exerci
 - Integrar Apache Kafka como adapter de saída para envio de CPF para validação e como adapter de entrada para receber o resultado da validação.
 - Testar unidades isoladas sem depender do contexto completo do Spring.
 - Validar as regras da arquitetura hexagonal com testes automatizados usando ArchUnit.
+- Implementar tratamento de erros global com exceções de domínio e respostas HTTP adequadas.
+- Escrever testes de integração com banco de dados real usando Testcontainers.
 - Usar CI para validar a suíte de testes a cada push ou pull request.
 
 ## Arquitetura
@@ -74,6 +76,7 @@ HTTP Controller
 - JUnit 5
 - Mockito
 - ArchUnit
+- Testcontainers
 - Maven
 - GitHub Actions
 
@@ -83,12 +86,18 @@ HTTP Controller
 mvn test
 ```
 
+Os testes de integração sobem um container MongoDB via Testcontainers, portanto é necessário ter o **Docker rodando** na máquina.
+
 A suíte atual contém testes unitários para:
 
 - Casos de uso de cadastro, consulta por ID, atualização e remoção de cliente.
 - Controller de cadastro e consulta.
 - Mappers MapStruct.
 - Adapters de persistência, consulta por ID e busca de endereço.
+
+Testes de integração com Testcontainers para:
+
+- Operações de salvar, buscar, atualizar e deletar no `CustomerRepository` com MongoDB real (`CustomerRepositoryIT`).
 
 E testes de arquitetura com ArchUnit para:
 
@@ -153,6 +162,14 @@ Resposta esperada:
 }
 ```
 
+Resposta quando o cliente não existe (`404`):
+
+```json
+{
+  "message": "Customer not found"
+}
+```
+
 Atualizar cliente:
 
 ```http
@@ -189,4 +206,4 @@ mvn --batch-mode test
 
 ## Observações
 
-Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são tratamento de erro em integrações externas, resposta HTTP adequada para cliente não encontrado, testes de integração com MongoDB e Kafka, configuração correta de ambientes e proteção de dados pessoais como CPF, e expansão dos testes de arquitetura com regras mais granulares por subcamada.
+Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são testes de integração com Kafka, validação de entrada com Bean Validation nos DTOs, paginação no `GET /customers`, cache com Spring Cache no `FindCustomerByIdUseCase`, e expansão dos testes de arquitetura com regras mais granulares por subcamada.
