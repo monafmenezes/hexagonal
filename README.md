@@ -19,6 +19,7 @@ O objetivo principal não é entregar uma API completa de produção, mas exerci
 - Paginar resultados com `Page<T>` e `Pageable` sem carregar todos os registros em memória.
 - Aplicar cache in-memory nos adapters de saída, mantendo o núcleo da aplicação livre de dependências de framework.
 - Modelar um segundo agregado (`Order`) relacionado ao `Customer`, exercitando reuso de portas entre use cases.
+- Configurar CORS na camada de infraestrutura, controlando origens, métodos e headers permitidos sem poluir o domínio.
 - Usar CI para validar a suíte de testes a cada push ou pull request.
 
 ## Arquitetura
@@ -110,6 +111,7 @@ HTTP Controller (GET /api/v1/customers?page=0&size=10)
 - Spring Cloud OpenFeign
 - Apache Kafka (Spring Kafka)
 - Spring Cache (ConcurrentMapCacheManager)
+- Spring Web MVC CORS (`WebMvcConfigurer`)
 - Bean Validation (Jakarta Validation + Hibernate Validator)
 - Spring Data MongoDB (múltiplos repositórios)
 - MapStruct
@@ -134,6 +136,7 @@ A suíte atual contém testes unitários para:
 - Casos de uso de cadastro, consulta por ID, atualização e remoção de cliente.
 - Controller de cadastro, consulta, listagem paginada e validação de entrada com `@WebMvcTest` + `MockMvc`.
 - Controller de pedidos: criação, listagem por cliente e validação de entrada.
+- Configuração de CORS: verifica que origens permitidas recebem os headers corretos e que origens desconhecidas são rejeitadas.
 - Mappers MapStruct.
 - Adapters de persistência, consulta por ID e busca de endereço.
 
@@ -323,3 +326,14 @@ mvn --batch-mode test
 ## Observações
 
 Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são testes de integração com Kafka, CQRS separando portas de leitura e escrita, observabilidade com Micrometer e Prometheus, e Outbox Pattern para consistência entre MongoDB e Kafka.
+
+## CORS
+
+A API está configurada para aceitar requisições de frontends rodando em:
+
+- `http://localhost:3000` (React)
+- `http://localhost:4200` (Angular)
+
+Métodos permitidos: `GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`.
+
+A configuração fica em `CorsConfig` (camada `config`), implementando `WebMvcConfigurer` — o domínio e os use cases não têm qualquer conhecimento sobre CORS.
