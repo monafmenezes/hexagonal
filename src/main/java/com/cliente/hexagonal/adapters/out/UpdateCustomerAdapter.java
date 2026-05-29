@@ -6,6 +6,7 @@ import com.cliente.hexagonal.adapters.out.repository.mapper.CustomerEntityMapper
 import com.cliente.hexagonal.application.core.domain.Customer;
 import com.cliente.hexagonal.application.ports.out.UpdateCustomerOutputPort;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,6 +18,7 @@ public class UpdateCustomerAdapter implements UpdateCustomerOutputPort {
     @Autowired private CustomerEntityMapper customerEntityMapper;
 
     @Override
+    @CacheEvict(value = "customers", key = "#customer.id")
     public void update(Customer customer) {
         CustomerEntity customerEntity = customerEntityMapper.toCustomerEntity(customer);
         customerRepository.save(customerEntity);
