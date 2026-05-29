@@ -2,6 +2,7 @@ package com.cliente.hexagonal.architecture;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
@@ -9,6 +10,7 @@ import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 public class LayredArchtectureTest {
 
     private final JavaClasses classes = new ClassFileImporter()
+            .withImportOption(new ImportOption.DoNotIncludeTests())
             .importPackages("com.cliente.hexagonal");
 
     @Test
