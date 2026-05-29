@@ -1,5 +1,5 @@
 package com.cliente.hexagonal.application.ports.out;
 
-public interface SendCpfForValidation {
+public interface SendCpfForValidationOutputPort {
     void send(String cpf);
 }
