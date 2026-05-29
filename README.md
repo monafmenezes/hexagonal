@@ -18,6 +18,7 @@ O objetivo principal não é entregar uma API completa de produção, mas exerci
 - Validar entrada com Bean Validation nos DTOs e retornar erros descritivos por campo.
 - Paginar resultados com `Page<T>` e `Pageable` sem carregar todos os registros em memória.
 - Aplicar cache in-memory nos adapters de saída, mantendo o núcleo da aplicação livre de dependências de framework.
+- Modelar um segundo agregado (`Order`) relacionado ao `Customer`, exercitando reuso de portas entre use cases.
 - Usar CI para validar a suíte de testes a cada push ou pull request.
 
 ## Arquitetura
@@ -67,6 +68,28 @@ HTTP Controller
   -> MongoDB Adapter (consultado apenas no primeiro acesso)
 ```
 
+Fluxo de criação de pedido:
+
+```text
+HTTP Controller (POST /api/v1/customers/{customerId}/orders)
+  -> CreateOrderInputPort
+  -> CreateOrderUseCase
+     -> FindCustomerByIdInputPort (valida que o cliente existe)
+     -> CreateOrderOutputPort
+     -> MongoDB Adapter (orders)
+```
+
+Fluxo de listagem de pedidos por cliente:
+
+```text
+HTTP Controller (GET /api/v1/customers/{customerId}/orders)
+  -> FindOrdersByCustomerIdInputPort
+  -> FindOrdersByCustomerIdUseCase
+     -> FindCustomerByIdInputPort (valida que o cliente existe)
+     -> FindOrdersByCustomerIdOutputPort
+     -> MongoDB Adapter (orders)
+```
+
 Fluxo de listagem paginada:
 
 ```text
@@ -88,6 +111,7 @@ HTTP Controller (GET /api/v1/customers?page=0&size=10)
 - Apache Kafka (Spring Kafka)
 - Spring Cache (ConcurrentMapCacheManager)
 - Bean Validation (Jakarta Validation + Hibernate Validator)
+- Spring Data MongoDB (múltiplos repositórios)
 - MapStruct
 - Lombok
 - JUnit 5
@@ -109,6 +133,7 @@ A suíte atual contém testes unitários para:
 
 - Casos de uso de cadastro, consulta por ID, atualização e remoção de cliente.
 - Controller de cadastro, consulta, listagem paginada e validação de entrada com `@WebMvcTest` + `MockMvc`.
+- Controller de pedidos: criação, listagem por cliente e validação de entrada.
 - Mappers MapStruct.
 - Adapters de persistência, consulta por ID e busca de endereço.
 
@@ -170,6 +195,37 @@ Resposta esperada:
   "size": 10,
   "number": 0
 }
+```
+
+Criar pedido para um cliente:
+
+```http
+POST /api/v1/customers/{customerId}/orders
+Content-Type: application/json
+
+{
+  "items": [
+    { "productName": "Produto A", "quantity": 2, "price": 10.00 }
+  ]
+}
+```
+
+Resposta esperada:
+
+```json
+{
+  "id": "abc123",
+  "customerId": "customer-1",
+  "items": [{ "productName": "Produto A", "quantity": 2, "price": 10.00 }],
+  "status": "PENDING",
+  "total": 20.00
+}
+```
+
+Listar pedidos de um cliente:
+
+```http
+GET /api/v1/customers/{customerId}/orders
 ```
 
 Criar cliente:
@@ -266,4 +322,4 @@ mvn --batch-mode test
 
 ## Observações
 
-Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são testes de integração com Kafka, segundo agregado `Order` relacionado ao `Customer`, CQRS separando portas de leitura e escrita, observabilidade com Micrometer e Prometheus, e Outbox Pattern para consistência entre MongoDB e Kafka.
+Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são testes de integração com Kafka, CQRS separando portas de leitura e escrita, observabilidade com Micrometer e Prometheus, e Outbox Pattern para consistência entre MongoDB e Kafka.
