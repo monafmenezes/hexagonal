@@ -15,6 +15,9 @@ O objetivo principal não é entregar uma API completa de produção, mas exerci
 - Validar as regras da arquitetura hexagonal com testes automatizados usando ArchUnit.
 - Implementar tratamento de erros global com exceções de domínio e respostas HTTP adequadas.
 - Escrever testes de integração com banco de dados real usando Testcontainers.
+- Validar entrada com Bean Validation nos DTOs e retornar erros descritivos por campo.
+- Paginar resultados com `Page<T>` e `Pageable` sem carregar todos os registros em memória.
+- Aplicar cache in-memory nos adapters de saída, mantendo o núcleo da aplicação livre de dependências de framework.
 - Usar CI para validar a suíte de testes a cada push ou pull request.
 
 ## Arquitetura
@@ -53,14 +56,26 @@ ReceiveValidatedCpfConsumer (Kafka Consumer ← tp-cpf-validated)
   -> MongoDB Adapter
 ```
 
-Fluxo de consulta de cliente por ID:
+Fluxo de consulta de cliente por ID (com cache):
 
 ```text
 HTTP Controller
   -> FindCustomerByIdInputPort
   -> FindCustomerByIdUseCase
   -> FindCustomerByIdOutputPort
-  -> MongoDB Adapter
+  -> FindCustomerByIdAdapter (@Cacheable — retorna do cache se já consultado)
+  -> MongoDB Adapter (consultado apenas no primeiro acesso)
+```
+
+Fluxo de listagem paginada:
+
+```text
+HTTP Controller (GET /api/v1/customers?page=0&size=10)
+  -> FindAllCustomersInputPort
+  -> FindAllCustomersUseCase
+  -> FindAllCustomersOutputPort
+  -> FindAllCustomersAdapter
+  -> MongoDB Adapter (com skip e limit)
 ```
 
 ## Tecnologias
@@ -71,6 +86,8 @@ HTTP Controller
 - Spring Data MongoDB
 - Spring Cloud OpenFeign
 - Apache Kafka (Spring Kafka)
+- Spring Cache (ConcurrentMapCacheManager)
+- Bean Validation (Jakarta Validation + Hibernate Validator)
 - MapStruct
 - Lombok
 - JUnit 5
@@ -91,7 +108,7 @@ Os testes de integração sobem um container MongoDB via Testcontainers, portant
 A suíte atual contém testes unitários para:
 
 - Casos de uso de cadastro, consulta por ID, atualização e remoção de cliente.
-- Controller de cadastro e consulta.
+- Controller de cadastro, consulta, listagem paginada e validação de entrada com `@WebMvcTest` + `MockMvc`.
 - Mappers MapStruct.
 - Adapters de persistência, consulta por ID e busca de endereço.
 
@@ -99,11 +116,18 @@ Testes de integração com Testcontainers para:
 
 - Operações de salvar, buscar, atualizar e deletar no `CustomerRepository` com MongoDB real (`CustomerRepositoryIT`).
 
+Testes de comportamento de cache para:
+
+- Verificar que o banco é consultado apenas uma vez para o mesmo ID após o resultado ser armazenado em cache.
+
 E testes de arquitetura com ArchUnit para:
 
 - Garantir que a camada `Application` não acessa `Adapters` nem `Config`.
 - Garantir que a camada `Adapters` não é acessada diretamente por outras camadas além de `Config`.
 - Garantir que a camada `Config` não é acessada por nenhuma outra camada.
+- Garantir que `application.core` não depende de `org.springframework.cache`.
+- Garantir que `@Cacheable` e `@CacheEvict` só existem em classes dentro de `adapters`.
+- Garantir que o domínio não importa nada dos adapters.
 
 ## Como Rodar a Aplicação
 
@@ -127,6 +151,26 @@ mvn spring-boot:run
 | `tp-cpf-validated`  | Entrada | Resultado da validação recebido para atualizar o cliente |
 
 ### Endpoints
+
+Listar clientes (paginado):
+
+```http
+GET /api/v1/customers?page=0&size=10&sort=name,asc
+```
+
+Resposta esperada:
+
+```json
+{
+  "content": [
+    { "name": "Maria", "cpf": "12345678901", "isValidCpf": true, "address": { ... } }
+  ],
+  "totalElements": 42,
+  "totalPages": 5,
+  "size": 10,
+  "number": 0
+}
+```
 
 Criar cliente:
 
@@ -166,7 +210,23 @@ Resposta quando o cliente não existe (`404`):
 
 ```json
 {
-  "message": "Customer not found"
+  "timestamp": "2026-05-29T18:00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Cliente não encontrado com o id: abc",
+  "path": "/api/v1/customers/abc"
+}
+```
+
+Resposta quando a requisição tem campos inválidos (`400`):
+
+```json
+{
+  "timestamp": "2026-05-29T18:00:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "cpf: O CPF deve ter 11 dígitos",
+  "path": "/api/v1/customers"
 }
 ```
 
@@ -206,4 +266,4 @@ mvn --batch-mode test
 
 ## Observações
 
-Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são testes de integração com Kafka, validação de entrada com Bean Validation nos DTOs, paginação no `GET /customers`, cache com Spring Cache no `FindCustomerByIdUseCase`, e expansão dos testes de arquitetura com regras mais granulares por subcamada.
+Este projeto ainda está em evolução. Alguns pontos naturais para próximos estudos são testes de integração com Kafka, segundo agregado `Order` relacionado ao `Customer`, CQRS separando portas de leitura e escrita, observabilidade com Micrometer e Prometheus, e Outbox Pattern para consistência entre MongoDB e Kafka.
