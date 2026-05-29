@@ -46,7 +46,7 @@ public class CustomerController {
         return ResponseEntity.ok(customerResponse);
     }
 
-    @PutMapping("/id")
+    @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable final String id,
                                        @Valid @RequestBody CustomerRequest customerRequest) {
         Customer customer = customerMapper.toCustomer(customerRequest);
