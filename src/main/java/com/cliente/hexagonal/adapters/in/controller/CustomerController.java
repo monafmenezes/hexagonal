@@ -5,11 +5,14 @@ import com.cliente.hexagonal.adapters.in.controller.request.CustomerRequest;
 import com.cliente.hexagonal.adapters.in.controller.response.CustomerResponse;
 import com.cliente.hexagonal.application.core.domain.Customer;
 import com.cliente.hexagonal.application.ports.in.DeleteCustomerByIdInputPort;
+import com.cliente.hexagonal.application.ports.in.FindAllCustomersInputPort;
 import com.cliente.hexagonal.application.ports.in.FindCustomerByIdInputPort;
 import com.cliente.hexagonal.application.ports.in.InsertCustomerInputPort;
 import com.cliente.hexagonal.application.ports.in.UpdateCustomerInputPort;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +34,16 @@ public class CustomerController {
 
     @Autowired
     DeleteCustomerByIdInputPort deleteCustomerByIdInputPort;
+
+    @Autowired
+    private FindAllCustomersInputPort findAllCustomersInputPort;
+
+    @GetMapping
+    public ResponseEntity<Page<CustomerResponse>> findAll(Pageable pageable) {
+        Page<CustomerResponse> page = findAllCustomersInputPort.findAll(pageable)
+                .map(customerMapper::toCustomerResponse);
+        return ResponseEntity.ok(page);
+    }
 
     @PostMapping
     public ResponseEntity<Void> insert(@Valid @RequestBody CustomerRequest customerRequest){

@@ -6,10 +6,6 @@ import com.cliente.hexagonal.application.ports.in.FindCustomerByIdInputPort;
 import com.cliente.hexagonal.application.ports.in.UpdateCustomerInputPort;
 import com.cliente.hexagonal.application.ports.out.FindAddresByZipCodeOutputPort;
 import com.cliente.hexagonal.application.ports.out.UpdateCustomerOutputPort;
-
-import java.util.Optional;
-
-
 public class UpdateCustomerUseCase implements UpdateCustomerInputPort {
 
     private final FindCustomerByIdInputPort findCustomerByIdInputPort;

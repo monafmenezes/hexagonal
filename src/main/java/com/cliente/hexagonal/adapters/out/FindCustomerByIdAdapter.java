@@ -6,6 +6,7 @@ import com.cliente.hexagonal.adapters.out.repository.mapper.CustomerEntityMapper
 import com.cliente.hexagonal.application.core.domain.Customer;
 import com.cliente.hexagonal.application.ports.out.FindCustomerByIdOutputPort;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -20,6 +21,7 @@ public class FindCustomerByIdAdapter implements FindCustomerByIdOutputPort {
     private CustomerEntityMapper customerEntityMapper;
 
     @Override
+    @Cacheable(value = "customers", key = "#id")
     public Optional<Customer> find(String id) {
         Optional<CustomerEntity> customerEntity = customerRepository.findById(id);
         return customerEntity.map(entity -> customerEntityMapper.toCustomer(entity));
